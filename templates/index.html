@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+{% if session.user %}
+  <p>Logged in as: {{ session.user.name }} ({{ session.user.phone }}) |
+  <a href="{{ url_for('logout') }}">Logout</a></p>
+{% else %}
+  <p><a href="{{ url_for('login') }}">Login</a></p>
+{% endif %}
+
+<html>
+<head>
+  <title>Scooter Tracker for Zip LLC</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <style>
+    #map { height: 400px; margin-bottom:20px; }
+  </style>
+</head>
+<body>
+  <h2>Scooter Locations</h2>
+  <div id="map"></div>
+
+<script>
+  var campusBounds = [
+    [41.59, -88.13], // SW corner
+    [41.62, -88.04]  // NE corner
+  ];
+
+  var map = L.map('map');
+  map.fitBounds(campusBounds);
+  map.setMaxBounds(campusBounds);
+  map.setMinZoom(15);
+  map.setMaxZoom(19);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  // Add scooters from Flask
+  var scooters = {{ scooters|tojson }};
+  scooters.forEach(s => {
+    if (s.lat && s.lon) {
+      L.marker([s.lat, s.lon]).addTo(map)
+        .bindPopup("Scooter: " + s.name + "<br/>Last user: " + (s.last_user || "N/A"));
+    }
+  });
+</script>
+
+
+<h3>Available Scooters</h3>
+<ul>
+  {% for s in scooters %}
+    {% if s["in_use"] == 0 %}
+      <li>
+        {{ s["name"] }} — Available
+        <form method="POST" action="/take" style="display:inline;">
+          <input type="hidden" name="scooter_id" value="{{ s['id'] }}">
+          <input type="hidden" name="user" value="{{ user.name }}">
+          <button type="submit">Take</button>
+        </form>
+      </li>
+    {% endif %}
+  {% endfor %}
+</ul>
+
+<h3>In Use Scooters</h3>
+<ul>
+  {% for s in scooters %}
+    {% if s["in_use"] == 1 %}
+      <li>
+        {{ s["name"] }} — Taken by {{ s["last_user"] }}
+        <form method="POST" action="/update" enctype="multipart/form-data">
+          <input type="hidden" name="scooter_id" value="{{ s['id'] }}">
+          <input type="hidden" id="lat" name="lat">
+          <input type="hidden" id="lon" name="lon">
+          <input type="hidden" name="user" value="{{ user.name }}">
+          <input type="file" name="photo" accept="image/*">
+          <button type="submit">Return</button>
+        </form>
+      </li>
+    {% endif %}
+  {% endfor %}
+</ul>
+
+
+  <script>
+    // Automatically grab user’s GPS for return form
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        document.getElementById("lat").value = pos.coords.latitude;
+        document.getElementById("lon").value = pos.coords.longitude;
+        console.log("Location set:", pos.coords.latitude, pos.coords.longitude);
+      }, function(err) {
+        alert("Could not get location: " + err.message);
+      });
+    } else {
+      alert("Geolocation not supported by your browser.");
+    }
+  </script>
+</body>
+</html>

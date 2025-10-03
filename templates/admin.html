@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><title>Admin</title></head>
+<body>
+    <h2>Admin Panel</h2>
+    <form method="post">
+        <input type="password" name="password" placeholder="Admin Password" required>
+        <h3>Add User</h3>
+        <input type="hidden" name="action" value="add_user">
+        <input type="text" name="name" placeholder="Name">
+        <input type="text" name="phone" placeholder="Phone">
+        <button type="submit">Add User</button>
+    </form>
+    <form method="post">
+        <input type="password" name="password" placeholder="Admin Password" required>
+        <h3>Add Scooter</h3>
+        <input type="hidden" name="action" value="add_scooter">
+        <input type="text" name="name" placeholder="Scooter Name">
+        <input type="text" name="lat" placeholder="Latitude">
+        <input type="text" name="lon" placeholder="Longitude">
+        <button type="submit">Add Scooter</button>
+    </form>
+</body>
+</html>
